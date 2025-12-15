@@ -41,12 +41,14 @@ BASELINE_ACC=$(python3 -c "import json; print(f\"{json.load(open('$OUTPUT_DIR/lo
 BASELINE_SAMPLES=$(python3 -c "import json; print(json.load(open('$OUTPUT_DIR/logiqa_results_Llama-3.2-3B.json'))['total_examples'])" 2>/dev/null || echo "0")
 
 
-# 3. Evaluate Dynamic Boost Model
+# 3. Evaluate TRAINED Model with Dynamic Hook
 echo ""
-echo "[3/4] Evaluating DYNAMIC model (Baseline + Dynamic 1.1x Hook)..."
+echo "[3/4] Evaluating TRAINED model (NeuralNinjasConnector + Dynamic Hook)..."
 DYNAMIC_OUTPUT_DIR="dynamic_results"
+TRAINED_MODEL_ID="NeuralNinjasConnector/Connector-Llama"
+
 python3 -u baseline/logiqa_baseline.py \
-    --model_name meta-llama/Llama-3.2-3B \
+    --model_name "$TRAINED_MODEL_ID" \
     --use_dynamic_boost \
     --boost_factor 1.1 \
     --output_dir "$DYNAMIC_OUTPUT_DIR" \
@@ -62,17 +64,17 @@ echo "[4/4] Final Comparison:"
 echo "======================================================================"
 echo "  MODEL                       | ACCURACY | SAMPLES"
 echo "------------------------------|----------|---------"
-echo "  Baseline (Standard)         | $BASELINE_ACC   | $BASELINE_SAMPLES"
-echo "  Dynamic Inference (1.1x)    | $DYNAMIC_ACC   | $DYNAMIC_SAMPLES"
+echo "  Baseline (Llama-3.2-3B)     | $BASELINE_ACC   | $BASELINE_SAMPLES"
+echo "  Trained + Dynamic Hook      | $DYNAMIC_ACC   | $DYNAMIC_SAMPLES"
 echo "======================================================================"
 
 # Improvement check
 if [ "$BASELINE_ACC" != "N/A" ] && [ "$DYNAMIC_ACC" != "N/A" ]; then
     DIFF=$(echo "$DYNAMIC_ACC - $BASELINE_ACC" | bc -l)
     if (( $(echo "$DIFF > 0" | bc -l) )); then
-        echo "✅ IMPROVEMENT: +$DIFF"
+        echo "✅ SUCCESS: Trained model (+hook) BEATS Baseline by +$DIFF"
     else
-        echo "⚠️  NO IMPROVEMENT: $DIFF"
+        echo "⚠️  FAILURE: Trained model is not better ($DIFF)"
     fi
 fi
 echo ""
