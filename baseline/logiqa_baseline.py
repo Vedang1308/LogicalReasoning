@@ -16,7 +16,10 @@ from transformers import (
     TrainingArguments, Trainer
 )
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-import deepspeed
+try:
+    import deepspeed
+except ImportError:
+    deepspeed = None
 import logging
 import sys
 import os
@@ -32,7 +35,15 @@ logger = logging.getLogger(__name__)
 class LogiQAEvaluator:
     def __init__(self, args):
         self.args = args
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # improved device detection
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        elif torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+            logger.info("Using MPS (Metal) for acceleration")
+        else:
+            self.device = torch.device("cpu")
         self.tokenizer = None
         self.model = None
         self.results = []
@@ -94,7 +105,8 @@ class LogiQAEvaluator:
     def format_prompt(self, example: Dict) -> str:
         """Format LogiQA example as prompt"""
         context = example.get('context', '')
-        question = example.get('question', '')
+        # Dataset key is 'query', fallback to 'question'
+        question = example.get('query', example.get('question', '')) 
         options = example.get('options', [])
         
         prompt = f"Context: {context}\n\nQuestion: {question}\n\nOptions:\n"
@@ -160,18 +172,30 @@ class LogiQAEvaluator:
         logger.info(f"Evaluating on {len(dataset)} examples...")
         start_time = time.time()
         
-        for i, example in enumerate(dataset):
-            if i % 50 == 0:
-                logger.info(f"Processing example {i+1}/{len(dataset)}")
+        from tqdm import tqdm
+        
+        logger.info(f"Evaluating on {len(dataset)} examples...")
+        start_time = time.time()
+        
+        for i, example in enumerate(tqdm(dataset, desc="Evaluating", unit="ex")):
                 
             prompt = self.format_prompt(example)
             response = self.generate_response(prompt)
             predicted_answer = self.extract_answer(response)
             
-            # Get correct answer
-            correct_answer = example.get('answer', example.get('label', ''))
+            # Get correct answer with robust fallback
+            # Debug script showed key is 'correct_option' (int)
+            correct_answer = example.get('correct_option', example.get('label', example.get('answer', example.get('correct_answer', ''))))
+            
+            # Handle integer labels (0=A, 1=B, 2=C, 3=D)
             if isinstance(correct_answer, int):
-                correct_answer = chr(65 + correct_answer)  # Convert 0,1,2,3 to A,B,C,D
+                correct_answer = chr(65 + correct_answer)
+            # Handle string labels that might be "0", "1", etc.
+            elif isinstance(correct_answer, str) and correct_answer.isdigit():
+                 correct_answer = chr(65 + int(correct_answer))
+            # Handle string labels like "a" or "A" etc
+            elif isinstance(correct_answer, str):
+                correct_answer = correct_answer.upper().strip()
                 
             is_correct = predicted_answer == correct_answer.upper()
             if is_correct:

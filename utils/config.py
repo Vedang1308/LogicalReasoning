@@ -201,8 +201,13 @@ class Config:
         
         if self.device == "cuda":
             import torch
-            if not torch.cuda.is_available():
-                print("⚠️  WARNING: CUDA requested but not available!")
+            if torch.cuda.is_available():
+                pass
+            elif torch.backends.mps.is_available():
+                print("✓ MPS (Metal) available - switching to mps")
+                self.device = "mps"
+            else:
+                print("⚠️  WARNING: CUDA requested but not available! Using CPU.")
                 self.device = "cpu"
         
         return True

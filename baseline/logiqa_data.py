@@ -54,10 +54,32 @@ def create_logiqa_sample():
 def load_logiqa_dataset():
     """Load LogiQA dataset with fallback to sample data"""
     try:
-        # Try to load from HuggingFace
-        dataset = load_dataset("lucasmccabe/logiqa", split="test")
-        print(f"Loaded {len(dataset)} LogiQA examples from HuggingFace")
-        return dataset
+        # Strategy 1: Try minguk/logiqa (clean mirror)
+        try:
+            print("Attempting to load 'minguk/logiqa'...")
+            dataset = load_dataset("minguk/logiqa", split="test")
+            print(f"Loaded {len(dataset)} examples from minguk/logiqa")
+            return dataset
+        except Exception as e:
+            print(f"minguk/logiqa failed: {e}")
+
+        # Strategy 2: Try lucasmccabe/logiqa with explicit parquet revision
+        try:
+            print("Attempting to load 'lucasmccabe/logiqa' (parquet revision)...")
+            dataset = load_dataset("lucasmccabe/logiqa", split="test", revision="refs/convert/parquet")
+            print(f"Loaded {len(dataset)} examples from lucasmccabe/logiqa (parquet)")
+            return dataset
+        except Exception as e:
+            print(f"lucasmccabe/logiqa (parquet) failed: {e}")
+
+        # Strategy 3: Original with trust_remote_code
+        try:
+            print("Attempting to load 'lucasmccabe/logiqa' (script)...")
+            dataset = load_dataset("lucasmccabe/logiqa", split="test", trust_remote_code=True)
+            print(f"Loaded {len(dataset)} examples from lucasmccabe/logiqa (script)")
+            return dataset
+        except Exception as e:
+            print(f"lucasmccabe/logiqa (script) failed: {e}")
     except Exception as e:
         print(f"Failed to load from HuggingFace: {e}")
         # Use sample data

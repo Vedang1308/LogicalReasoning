@@ -1,0 +1,93 @@
+{
+  "model_name": "./output/connector_model/fixed_remote",
+  "total_examples": 5,
+  "correct_predictions": 4,
+  "accuracy": 0.8,
+  "optimization": {
+    "use_fsdp": false,
+    "use_deepspeed": false,
+    "simple_inference": true
+  },
+  "generation_params": {
+    "max_new_tokens": 10,
+    "temperature": 0.1,
+    "do_sample": false
+  },
+  "results": [
+    {
+      "example_id": 0,
+      "context": "All birds can fly. Penguins are birds.",
+      "question": "Can penguins fly according to the given statements?",
+      "options": [
+        "Yes, because penguins are birds",
+        "No, this is a contradiction",
+        "Maybe, it depends",
+        "The statements are unclear"
+      ],
+      "correct_answer": "A",
+      "predicted_answer": "A",
+      "response": "Penguins are birds but not all birds can fly.",
+      "is_correct": true
+    },
+    {
+      "example_id": 1,
+      "context": "If it rains, the ground gets wet. The ground is not wet.",
+      "question": "What can we conclude?",
+      "options": [
+        "It is raining",
+        "It is not raining",
+        "The ground might be wet",
+        "We cannot conclude anything"
+      ],
+      "correct_answer": "B",
+      "predicted_answer": "B",
+      "response": "B",
+      "is_correct": true
+    },
+    {
+      "example_id": 2,
+      "context": "All students who study hard pass the exam. John did not pass the exam.",
+      "question": "What can we conclude about John?",
+      "options": [
+        "John studied hard",
+        "John did not study hard",
+        "John might have studied hard",
+        "We need more information"
+      ],
+      "correct_answer": "B",
+      "predicted_answer": "B",
+      "response": "B",
+      "is_correct": true
+    },
+    {
+      "example_id": 3,
+      "context": "Either the meeting is today or tomorrow. The meeting is not today.",
+      "question": "When is the meeting?",
+      "options": [
+        "Today",
+        "Tomorrow",
+        "Next week",
+        "We cannot determine"
+      ],
+      "correct_answer": "B",
+      "predicted_answer": "B",
+      "response": "B",
+      "is_correct": true
+    },
+    {
+      "example_id": 4,
+      "context": "If someone is a doctor, then they have a medical degree. Sarah has a medical degree.",
+      "question": "What can we conclude about Sarah?",
+      "options": [
+        "Sarah is definitely a doctor",
+        "Sarah might be a doctor",
+        "Sarah is not a doctor",
+        "We cannot conclude anything about Sarah being a doctor"
+      ],
+      "correct_answer": "D",
+      "predicted_answer": "B",
+      "response": "B",
+      "is_correct": false
+    }
+  ]
+}
