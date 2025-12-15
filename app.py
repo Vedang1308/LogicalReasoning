@@ -122,14 +122,13 @@ elif page == "Training Control":
                         st.balloons()
 
     with col2:
-        if not confirm:
-            st.markdown("### 📉 Last Known Metrics")
-            meta_files = glob.glob("checkpoints/training_metadata.json")
-            if meta_files:
-                with open(meta_files[0], 'r') as f:
-                    st.json(json.load(f))
-            else:
-                st.info("No training metadata found. Ready to start.")
+        st.markdown("### 📉 Last Known Metrics")
+        meta_files = glob.glob("checkpoints/training_metadata.json")
+        if meta_files:
+            with open(meta_files[0], 'r') as f:
+                st.json(json.load(f))
+        else:
+            st.info("No training metadata found. Ready to start.")
 
 # --- 3. EVALUATION & COMPARE ---
 elif page == "Evaluation & Compare":
