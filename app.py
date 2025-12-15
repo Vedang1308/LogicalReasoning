@@ -108,31 +108,48 @@ elif page == "Training Control":
     with col1:
         st.markdown("### 🎮 Control Panel")
         
-        # Checkpoint Analysis
-        meta_files = glob.glob("checkpoints/training_metadata.json")
-        has_checkpoint = False
-        checkpoint_time = None
-        checkpoint_epoch = "?"
+    with col1:
+        st.markdown("### 🎮 Control Panel")
         
-        if meta_files:
+        # --- CHECKPOINT VALIDATION LOGIC ---
+        meta_path = Path("checkpoints/training_metadata.json")
+        checkpoint_dir = Path("checkpoints")
+        
+        has_metadata = meta_path.exists()
+        has_weights = (checkpoint_dir / "model.safetensors").exists() or (checkpoint_dir / "pytorch_model.bin").exists()
+        is_valid_run = False
+        checkpoint_info = "❌ No Checkpoint"
+        
+        if has_metadata:
             try:
-                with open(meta_files[0], 'r') as f:
+                with open(meta_path, 'r') as f:
                     meta = json.load(f)
-                    has_checkpoint = True
-                    checkpoint_time = meta.get('timestamp', 'Unknown')
-                    checkpoint_epoch = meta.get('epoch', '?')
+                    epoch = meta.get('epoch', 1)
+                    files = meta.get('files_processed', 0)
+                    timestamp = meta.get('timestamp', '')
+                    
+                    # Logic: meaningful progress?
+                    if files > 0 or epoch > 1:
+                        is_valid_run = True
+                        checkpoint_info = f"✅ Epoch {epoch} | Files {files}"
+                    else:
+                        checkpoint_info = "⚠️ Checkpoint Found but Empty (0 files)"
             except:
-                pass
+                checkpoint_info = "⚠️ Corrupted Metadata"
         
-        # Status Card
-        if has_checkpoint:
-            st.success(f"✅ Checkpoint Found (Epoch {checkpoint_epoch})")
-            st.caption(f"Last saved: {checkpoint_time}")
-            # Heuristic warning for old checkpoints
-            if "2025-11" in str(checkpoint_time): 
-                st.warning("⚠️ This checkpoint looks old. Recommend 'Start Fresh'.")
+        can_resume = has_metadata and has_weights and is_valid_run
+        
+        # UI Feedback
+        if can_resume:
+            st.success(checkpoint_info)
+            if "2025-11" in str(timestamp):
+                st.warning("Old Checkpoint (Nov). Recommend Fresh Start.")
+        elif has_metadata:
+             st.warning(f"Cannot Resume: {checkpoint_info}")
+             if not has_weights:
+                 st.error("Missing model weight files!")
         else:
-            st.info("❌ No Local Checkpoint Found")
+            st.info("No checkpoint found. Ready to start.")
 
         st.divider()
 
@@ -142,9 +159,9 @@ elif page == "Training Control":
         # 1. RESUME
         st.markdown("**Option A: Resume**")
         st.button("⏯️ Resume Training", 
-                 disabled=(not has_checkpoint) or is_locked, 
+                 disabled=(not can_resume) or is_locked, 
                  on_click=lambda: lock_ui('resume'),
-                 help="Continue from the exact file index where it left off.")
+                 help="Enabled only if a valid, non-empty checkpoint exists.")
         
         st.divider()
 
