@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e  # Exit immediately if a command exits with a non-zero status.
+
 # Script to run retraining on the Supercomputer
 # It handles environment setup and execution
 

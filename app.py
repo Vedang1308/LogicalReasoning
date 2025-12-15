@@ -85,88 +85,126 @@ if page == "Dashboard":
 elif page == "Training Control":
     st.title("⚙️ Training Control Center")
     
-    # Session State for Locking UI
+    # Session State for Locking UI during execution
     if 'training_active' not in st.session_state:
         st.session_state['training_active'] = False
-    
-    def start_training():
+        st.session_state['training_mode'] = None
+
+    # Helper to unlock
+    def lock_ui(mode):
         st.session_state['training_active'] = True
+        st.session_state['training_mode'] = mode
     
+    # Helper to reset (called only on page reload usually)
+    def unlock_ui():
+        st.session_state['training_active'] = False
+        st.session_state['training_mode'] = None
+
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        st.markdown("### Actions")
+        st.markdown("### 🎮 Control Panel")
         
-        # Checkpoint Status
+        # Checkpoint Analysis
         meta_files = glob.glob("checkpoints/training_metadata.json")
-        has_checkpoint = len(meta_files) > 0
-        st.markdown(f"**Checkpoint Status:** {'✅ Found' if has_checkpoint else '❌ Not Found'}")
+        has_checkpoint = False
+        checkpoint_time = None
+        checkpoint_epoch = "?"
         
-        col_resume, col_start = st.columns(2)
+        if meta_files:
+            try:
+                with open(meta_files[0], 'r') as f:
+                    meta = json.load(f)
+                    has_checkpoint = True
+                    checkpoint_time = meta.get('timestamp', 'Unknown')
+                    checkpoint_epoch = meta.get('epoch', '?')
+            except:
+                pass
         
-        # Disable buttons if training is active
+        # Status Card
+        if has_checkpoint:
+            st.success(f"✅ Checkpoint Found (Epoch {checkpoint_epoch})")
+            st.caption(f"Last saved: {checkpoint_time}")
+            # Heuristic warning for old checkpoints
+            if "2025-11" in str(checkpoint_time): 
+                st.warning("⚠️ This checkpoint looks old. Recommend 'Start Fresh'.")
+        else:
+            st.info("❌ No Local Checkpoint Found")
+
+        st.divider()
+
+        # BUTTONS
         is_locked = st.session_state['training_active']
         
-        # TRACK WHICH BUTTON WAS PRESSED
-        if 'training_mode' not in st.session_state:
-            st.session_state['training_mode'] = None
-
-        with col_resume:
-            def on_resume():
-                st.session_state['training_active'] = True
-                st.session_state['training_mode'] = 'resume'
-            
-            st.button("⏯️ Resume", 
-                     disabled=(not has_checkpoint) or is_locked, 
-                     on_click=on_resume,
-                     help="Continue from last checkpoint")
+        # 1. RESUME
+        st.markdown("**Option A: Resume**")
+        st.button("⏯️ Resume Training", 
+                 disabled=(not has_checkpoint) or is_locked, 
+                 on_click=lambda: lock_ui('resume'),
+                 help="Continue from the exact file index where it left off.")
         
-        with col_start:
-            def on_fresh():
-                st.session_state['training_active'] = True
-                st.session_state['training_mode'] = 'fresh'
-            
-            st.button("🚀 Start Fresh", 
-                     disabled=is_locked, 
-                     type="primary",
-                     on_click=on_fresh,
-                     help="Delete checkpoint and restart")
+        st.divider()
+
+        # 2. FRESH START (Protected)
+        st.markdown("**Option B: Fresh Start**")
+        safety_switch = st.checkbox("Unlock 'Start Fresh'", disabled=is_locked, help="Check this to enable the button below.")
+        
+        st.button("🚀 Start Fresh (Wipe & Train)", 
+                 disabled=(not safety_switch) or is_locked, 
+                 type="primary",
+                 on_click=lambda: lock_ui('fresh'),
+                 help="WARNING: Deletes 'checkpoints/' and starts from Llama-3.2 base.")
 
     with col2:
-        # EXECUTION LOGIC (Runs if state is active)
+        # EXECUTION LOGIC
         if st.session_state['training_active']:
-            st.info("🔄 Process Running... Do not refresh.")
-            st.markdown("### 📜 Live Training Logs")
+            mode = st.session_state['training_mode']
+            st.info(f"🔄 Execution in progress ({mode.title()} Mode)... Please wait.")
             
-            log_box = st.empty()
+            # Log container
+            st.markdown("### 📜 Live Console Output")
+            log_container = st.empty()
+            
+            # Build Command
             cmd = "./run_retrain.sh"
-            
-            if st.session_state['training_mode'] == 'resume':
+            if mode == 'resume':
                 cmd += " --resume"
             
-            # Run the command (Blocking)
-            ret_code = run_command_with_streaming(cmd, log_box)
-            
-            # When finished:
-            st.session_state['training_active'] = False
-            st.session_state['training_mode'] = None
-            
-            if ret_code == 0:
-                st.success("Training Complete!")
-                st.balloons()
-            else:
-                st.error("Training Failed. Check logs.")
+            # Run
+            try:
+                ret_code = run_command_with_streaming(cmd, log_container)
                 
-            time.sleep(2)
-            st.rerun()
+                # Completion Handling
+                st.session_state['training_active'] = False # Unlock for next render
+                
+                if ret_code == 0:
+                    st.success("✅ Process Completed Successfully!")
+                    st.balloons()
+                else:
+                    st.error(f"❌ Process Failed (Exit Code: {ret_code}). See logs above.")
+                
+                # Delay to let user see the result before potential rerun
+                time.sleep(3)
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"System Error: {e}")
+                st.session_state['training_active'] = False
 
-        elif not st.session_state['training_active']:
-            st.markdown("### 📉 Last Known Metrics")
-            if meta_files:
+        else:
+            # IDLE STATE DISPLAY
+            st.markdown("### 📉 Metrics History")
+            if has_checkpoint and meta_files:
                 with open(meta_files[0], 'r') as f:
                     st.json(json.load(f))
             else:
-                st.info("No training metadata found. Ready to start.")
+                st.markdown("""
+                *No active training session.*
+                
+                **Ready to Train:**
+                1.  **Resume**: Use if you were interrupted.
+                2.  **Start Fresh**: Use for a new run (Standard for Retraining).
+                """)
 
 # --- 3. EVALUATION & COMPARE ---
 elif page == "Evaluation & Compare":
