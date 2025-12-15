@@ -36,32 +36,31 @@ else
     python3 -u baseline/logiqa_baseline.py --model_name "$BASELINE_MODEL" --output_dir "$OUTPUT_DIR"
 fi
 
-# 3. Evaluate Fixed Model
-echo ""
-echo "[3/4] Evaluating FIXED model ($FIXED_MODEL)..."
-# Ensure the model exists (the remote download script should have been run)
-if [ ! -d "$FIXED_MODEL" ]; then
-    echo "⚠️  Fixed model not found! Running remote fix pipeline first..."
-    ./run_remote_fix.sh
-fi
-python3 -u baseline/logiqa_baseline.py --model_name "$FIXED_MODEL" --output_dir "$OUTPUT_DIR"
+# Extract accuracy for Baseline model
+BASELINE_ACC=$(python3 -c "import json; print(f\"{json.load(open('$OUTPUT_DIR/logiqa_results_Llama-3.2-3B.json'))['accuracy']:.4f}\")" 2>/dev/null || echo "N/A")
+BASELINE_SAMPLES=$(python3 -c "import json; print(json.load(open('$OUTPUT_DIR/logiqa_results_Llama-3.2-3B.json'))['total_examples'])" 2>/dev/null || echo "0")
 
-# 4. Compare Results
+
+# 3. Evaluate Dynamic Boost Model
+echo ""
+echo "[3/4] Evaluating DYNAMIC model (Baseline + Dynamic 1.1x Hook)..."
+python3 -u baseline/logiqa_baseline.py \
+    --model_name meta-llama/Llama-3.2-3B \
+    --use_dynamic_boost \
+    --boost_factor 1.1 \
+    --output_dir baseline_results \
+    --max_samples 1000 # Evaluate full set
+
+# Extract accuracy for Dynamic model
+DYNAMIC_ACC=$(grep "Accuracy:" baseline_results/summary.txt | tail -n 1 | awk '{print $2}')
+DYNAMIC_SAMPLES=$(grep "Accuracy:" baseline_results/summary.txt | tail -n 1 | awk -F'[(/]' '{print $3}')
+
+# --- 4. COMPARE RESULTS ---
 echo ""
 echo "[4/4] Final Comparison:"
 echo "======================================================================"
 echo "  MODEL                       | ACCURACY | SAMPLES"
 echo "------------------------------|----------|---------"
-
-# Extract accuracy using python one-liner
-BASE_ACC=$(python3 -c "import json; print(f\"{json.load(open('$OUTPUT_DIR/logiqa_results_Llama-3.2-3B.json'))['accuracy']:.4f}\")" 2>/dev/null || echo "N/A")
-FIX_ACC=$(python3 -c "import json; print(f\"{json.load(open('$OUTPUT_DIR/logiqa_results_fixed_remote.json'))['accuracy']:.4f}\")" 2>/dev/null || echo "N/A")
-
-BASE_COUNT=$(python3 -c "import json; print(json.load(open('$OUTPUT_DIR/logiqa_results_Llama-3.2-3B.json'))['total_examples'])" 2>/dev/null || echo "0")
-FIX_COUNT=$(python3 -c "import json; print(json.load(open('$OUTPUT_DIR/logiqa_results_fixed_remote.json'))['total_examples'])" 2>/dev/null || echo "0")
-
-echo "  Baseline (Llama-3.2-3B)     | $BASE_ACC   | $BASE_COUNT"
-echo "  Fixed (Connector Boost)     | $FIX_ACC   | $FIX_COUNT"
 echo "======================================================================"
 
 # Improvement check

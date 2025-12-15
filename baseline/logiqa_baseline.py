@@ -31,6 +31,86 @@ from logiqa_data import load_logiqa_dataset
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Import Config for connector definitions
+try:
+    from utils.config import Config
+except ImportError:
+    # Fallback if running from a different directory
+    sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+    from utils.config import Config
+
+class ConnectorBoostHook:
+    """
+    Forward hook to dynamically boost connector embeddings during inference.
+    Mirrors the context-aware boosting done during training.
+    """
+    def __init__(self, tokenizer, boost_factor=1.1):
+        self.tokenizer = tokenizer
+        self.boost_factor = boost_factor
+        self.config = Config()
+        self.connector_sequences = self._precompute_connector_sequences()
+        logger.info(f"Initialized Dynamic Boost Hook (Factor: {self.boost_factor}x)")
+        logger.info(f"Monitoring {len(self.connector_sequences)} connector phrases")
+
+    def _precompute_connector_sequences(self):
+        """Pre-compute token sequences for all connector phrases"""
+        sequences = []
+        all_phrases = []
+        for _, words in self.config.connector_types.items():
+            all_phrases.extend(words)
+        
+        # Sort by length (descending) to match longest phrases first
+        all_phrases.sort(key=len, reverse=True)
+        
+        for phrase in all_phrases:
+            # Note: We add a leading space to match how words appear in sentences
+            # " therefore" vs "therefore" (start of sentence)
+            
+            # 1. With leading space
+            seq = self.tokenizer.encode(" " + phrase, add_special_tokens=False)
+            if seq:
+                sequences.append(seq)
+                
+            # 2. Without leading space (start of sentence)
+            seq_start = self.tokenizer.encode(phrase, add_special_tokens=False)
+            if seq_start and seq_start != seq:
+                sequences.append(seq_start)
+                
+        return sequences
+
+    def __call__(self, module, inputs, output):
+        """
+        Hook function signature: (module, input, output)
+        input: tuple containing (input_ids,)
+        output: embedding tensor (batch, seq_len, hidden_dim)
+        """
+        input_ids = inputs[0] # (batch, seq_len)
+        
+        # We modify 'output' in-place or return a new tensor
+        # Since this is an extraction hook, simple in-place modification is tricky for gradients but fine for inference
+        
+        with torch.no_grad():
+            batch_size, seq_len = input_ids.shape
+            
+            for b_idx in range(batch_size):
+                row_ids = input_ids[b_idx].tolist()
+                
+                # Naive search for sub-sequences
+                # Optimization: Could be a Trie, but for <300 phrases and short seqs, loop is fine
+                for seq in self.connector_sequences:
+                    n = len(seq)
+                    if n > seq_len:
+                        continue
+                        
+                    # Sliding window (can be optimized with KMP or string search if needed)
+                    for i in range(len(row_ids) - n + 1):
+                        if row_ids[i:i+n] == seq:
+                            # Found match! Apply boost
+                            # logger.debug(f"Boosting connector found at {i}:{i+n}")
+                            output[b_idx, i:i+n, :] *= self.boost_factor
+        
+        return output
+
 
 class LogiQAEvaluator:
     def __init__(self, args):
@@ -93,6 +173,16 @@ class LogiQAEvaluator:
                 low_cpu_mem_usage=True,
                 max_memory={0: "3.5GB"}  # Reserve memory for operations
             )
+            
+        # --- DYNAMIC BOOST HOOK REGISTRATION ---
+        if self.args.use_dynamic_boost:
+            logger.info(f"⚡ Enabling Dynamic Inference Boost (Factor: {self.args.boost_factor}x)")
+            self.boost_hook = ConnectorBoostHook(self.tokenizer, boost_factor=self.args.boost_factor)
+            
+            # Register forward hook on embedding layer
+            embed_layer = self.model.get_input_embeddings()
+            embed_layer.register_forward_hook(self.boost_hook)
+            logger.info("✓ Hook registered on embedding layer")
             
         logger.info("Model loaded successfully")
         
@@ -302,6 +392,12 @@ def main():
     # Output arguments
     parser.add_argument("--output_dir", type=str, default="./baseline_results",
                        help="Output directory for results")
+                       
+    # Dynamic Boost arguments
+    parser.add_argument("--use_dynamic_boost", action="store_true",
+                       help="Enable dynamic connector boosting during inference")
+    parser.add_argument("--boost_factor", type=float, default=1.1,
+                       help="Boost factor for dynamic inference (default: 1.1)")
     
     args = parser.parse_args()
     
