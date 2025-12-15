@@ -42,7 +42,9 @@ fi
 
 # If we are here, Python is good. Try installing dependencies.
 echo "Installing dependencies..."
+# Install requirements
 python3 -m pip install --user -r requirements.txt
+python3 -m pip install --user streamlit plotly altair
 python3 -m pip install --user huggingface_hub[cli,hf_transfer]
 
 echo ""
