@@ -55,8 +55,8 @@ def main():
     parser = argparse.ArgumentParser(description="Bake connector boost into model weights")
     parser.add_argument("--input_path", type=str, default="./output/connector_model/final",
                       help="Path to the trained model (default: ./output/connector_model/final)")
-    parser.add_argument("--output_path", type=str, default="./output/connector_model/fixed",
-                      help="Path to save the fixed model (default: ./output/connector_model/fixed)")
+    parser.add_argument("--boost_factor", type=float, default=None,
+                      help="Override config boost factor (e.g. 1.05)")
                       
     args = parser.parse_args()
 
@@ -76,13 +76,15 @@ def main():
             return
         
     config = Config()
-    boost_factor = config.boost_factor
+    # Use argument if provided, else config
+    boost_factor = args.boost_factor if args.boost_factor is not None else config.boost_factor
     logger.info(f"Boost factor: {boost_factor}x")
     
     # 1. Load Tokenizer
     logger.info(f"\n[1/4] Loading tokenizer from {input_path}...")
     try:
-        tokenizer = AutoTokenizer.from_pretrained(input_path)
+        # Added fix_mistral_regex=True to suppress warnings and ensure correctness
+        tokenizer = AutoTokenizer.from_pretrained(input_path, fix_mistral_regex=True)
     except Exception as e:
         logger.error(f"Failed to load tokenizer from {input_path}: {e}")
         return

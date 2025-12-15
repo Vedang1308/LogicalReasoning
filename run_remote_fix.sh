@@ -30,10 +30,9 @@ export HF_HUB_ENABLE_HF_TRANSFER=1
 # 2. Run Fix Script (Download + Fix)
 echo ""
 echo "[2/3] Downloading and fixing model..."
-# Note: Input path is the remote Repo ID. The script now handles this.
-python3 fix_embeddings.py \
-  --input_path "$REPO_ID" \
-  --output_path "$FIXED_MODEL_DIR"
+echo "[2/3] Baking boost into embeddings (Factor: 1.05x)..."
+# Using 1.05x instead of 1.1x to avoid performance degradation
+python3 fix_embeddings.py --input_path "$REPO_ID" --output_path "$FIXED_MODEL_DIR" --boost_factor 1.05
 
 # 3. Run Evaluation on Fixed Model
 echo ""

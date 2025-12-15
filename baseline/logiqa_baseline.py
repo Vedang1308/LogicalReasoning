@@ -55,7 +55,8 @@ class LogiQAEvaluator:
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.args.model_name,
             trust_remote_code=True,
-            padding_side="left"
+            padding_side="left",
+            fix_mistral_regex=True
         )
         
         if self.tokenizer.pad_token is None:
