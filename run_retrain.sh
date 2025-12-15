@@ -26,9 +26,16 @@ bash setup_env.sh
 
 # 2.5 CLEANUP & CONFIG
 echo "Cleaning up zombi processes on GPU..."
-# Kill any existing main.py processes owned by this user
-pkill -u "$(whoami)" -f main.py || true
-sleep 3 # Give them time to die
+echo "GPU State BEFORE cleanup:"
+nvidia-smi || echo "nvidia-smi not found"
+
+# Force Kill (SIGKILL) any existing main.py processes owned by this user
+echo "Killing old main.py processes..."
+pkill -9 -u "$(whoami)" -f main.py || true
+sleep 5 # Give them time to yield resources
+
+echo "GPU State AFTER cleanup:"
+nvidia-smi || echo "nvidia-smi not found"
 
 # Optimize memory allocation
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
