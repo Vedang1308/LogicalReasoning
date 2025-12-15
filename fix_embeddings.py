@@ -55,6 +55,8 @@ def main():
     parser = argparse.ArgumentParser(description="Bake connector boost into model weights")
     parser.add_argument("--input_path", type=str, default="./output/connector_model/final",
                       help="Path to the trained model (default: ./output/connector_model/final)")
+    parser.add_argument("--output_path", type=str, default="./output/connector_model/fixed",
+                      help="Path to save the fixed model (default: ./output/connector_model/fixed)")
     parser.add_argument("--boost_factor", type=float, default=None,
                       help="Override config boost factor (e.g. 1.05)")
                       
