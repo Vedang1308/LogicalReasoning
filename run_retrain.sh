@@ -24,6 +24,15 @@ python3 --version
 # Run with bash to prevent permission issues if executable bit not set
 bash setup_env.sh
 
+# 2.5 CLEANUP & CONFIG
+echo "Cleaning up zombi processes on GPU..."
+# Kill any existing main.py processes owned by this user
+pkill -u "$(whoami)" -f main.py || true
+sleep 3 # Give them time to die
+
+# Optimize memory allocation
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
 # 2. Set Token (replace with your token if not set)
 # export HF_TOKEN="hf_..." 
 
