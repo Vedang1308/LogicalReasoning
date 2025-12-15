@@ -89,21 +89,37 @@ elif page == "Training Control":
     
     with col1:
         st.markdown("### Actions")
-        st.warning("Training will overwrite local checkpoints.")
-        confirm = st.checkbox("I understand, unlock training")
         
-        if st.button("🚀 Start Retraining", disabled=not confirm, type="primary"):
-            st.toast("Starting Retraining Process...")
-            with col2:
-                st.markdown("### 📜 Live Training Logs")
-                log_box = st.empty()
-                ret_code = run_command_with_streaming("./run_retrain.sh", log_box)
-                
-                if ret_code == 0:
-                    st.success("Training Complete!")
-                    st.balloons()
-                else:
-                    st.error("Training Failed. Check logs.")
+        # Checkpoint Status
+        meta_files = glob.glob("checkpoints/training_metadata.json")
+        has_checkpoint = len(meta_files) > 0
+        
+        st.markdown(f"**Checkpoint Status:** {'✅ Found' if has_checkpoint else '❌ Not Found'}")
+        
+        col_resume, col_start = st.columns(2)
+        
+        with col_resume:
+            if st.button("⏯️ Resume Training", disabled=not has_checkpoint, help="Continue from last saved epoch/file"):
+                st.toast("Resuming Training...")
+                with col2:
+                    st.markdown("### 📜 Live Training Logs (Resuming)")
+                    log_box = st.empty()
+                    # Run with resume flag
+                    ret_code = run_command_with_streaming("./run_retrain.sh --resume", log_box)
+                    if ret_code == 0:
+                        st.success("Training Complete!")
+                        st.balloons()
+        
+        with col_start:
+            if st.button("🚀 Start Fresh", type="primary", help="Deletes local checkpoints and starts over"):
+                st.toast("Starting Fresh Training...")
+                with col2:
+                    st.markdown("### 📜 Live Training Logs (Fresh)")
+                    log_box = st.empty()
+                    ret_code = run_command_with_streaming("./run_retrain.sh", log_box)
+                    if ret_code == 0:
+                        st.success("Training Complete!")
+                        st.balloons()
 
     with col2:
         if not confirm:

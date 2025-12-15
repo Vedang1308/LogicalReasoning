@@ -10,16 +10,21 @@ source /home/vavaghad/miniconda/bin/activate
 # 2. Set Token (replace with your token if not set)
 # export HF_TOKEN="hf_..." 
 
-# 3. Clean old checkpoints (optional, but good for fresh start)
-echo "Removing old local checkpoints..."
-rm -rf checkpoints/
-
 # 4. Run Training
-# --hf-repo-id: Where to push the result
-# --num-epochs: 1 epoch is likely enough given we are just finetuning
-echo "Starting Retraining (Boost 1.01x, LR 2e-6)..."
-python3 -u main.py \
-    --hf-repo-id "NeuralNinjasConnector/Connector-Llama" \
-    --num-epochs 1
+# Check if passed argument is --resume
+if [ "$1" == "--resume" ]; then
+    echo "Resuming Training from Checkpoint..."
+    # Don't delete checkpoints folder if resuming!
+    python3 -u main.py \
+        --hf-repo-id "NeuralNinjasConnector/Connector-Llama" \
+        --num-epochs 1 \
+        --resume-training
+else
+    echo "Starting FRESH Training (Cleaning old checkpoints)..."
+    rm -rf checkpoints/
+    python3 -u main.py \
+        --hf-repo-id "NeuralNinjasConnector/Connector-Llama" \
+        --num-epochs 1
+fi
 
 echo "Retraining Complete!"
