@@ -85,6 +85,13 @@ if page == "Dashboard":
 elif page == "Training Control":
     st.title("⚙️ Training Control Center")
     
+    # Session State for Locking UI
+    if 'training_active' not in st.session_state:
+        st.session_state['training_active'] = False
+    
+    def start_training():
+        st.session_state['training_active'] = True
+    
     col1, col2 = st.columns([1, 2])
     
     with col1:
@@ -93,42 +100,73 @@ elif page == "Training Control":
         # Checkpoint Status
         meta_files = glob.glob("checkpoints/training_metadata.json")
         has_checkpoint = len(meta_files) > 0
-        
         st.markdown(f"**Checkpoint Status:** {'✅ Found' if has_checkpoint else '❌ Not Found'}")
         
         col_resume, col_start = st.columns(2)
         
+        # Disable buttons if training is active
+        is_locked = st.session_state['training_active']
+        
+        # TRACK WHICH BUTTON WAS PRESSED
+        if 'training_mode' not in st.session_state:
+            st.session_state['training_mode'] = None
+
         with col_resume:
-            if st.button("⏯️ Resume Training", disabled=not has_checkpoint, help="Continue from last saved epoch/file"):
-                st.toast("Resuming Training...")
-                with col2:
-                    st.markdown("### 📜 Live Training Logs (Resuming)")
-                    log_box = st.empty()
-                    # Run with resume flag
-                    ret_code = run_command_with_streaming("./run_retrain.sh --resume", log_box)
-                    if ret_code == 0:
-                        st.success("Training Complete!")
-                        st.balloons()
+            def on_resume():
+                st.session_state['training_active'] = True
+                st.session_state['training_mode'] = 'resume'
+            
+            st.button("⏯️ Resume", 
+                     disabled=(not has_checkpoint) or is_locked, 
+                     on_click=on_resume,
+                     help="Continue from last checkpoint")
         
         with col_start:
-            if st.button("🚀 Start Fresh", type="primary", help="Deletes local checkpoints and starts over"):
-                st.toast("Starting Fresh Training...")
-                with col2:
-                    st.markdown("### 📜 Live Training Logs (Fresh)")
-                    log_box = st.empty()
-                    ret_code = run_command_with_streaming("./run_retrain.sh", log_box)
-                    if ret_code == 0:
-                        st.success("Training Complete!")
-                        st.balloons()
+            def on_fresh():
+                st.session_state['training_active'] = True
+                st.session_state['training_mode'] = 'fresh'
+            
+            st.button("🚀 Start Fresh", 
+                     disabled=is_locked, 
+                     type="primary",
+                     on_click=on_fresh,
+                     help="Delete checkpoint and restart")
 
     with col2:
-        st.markdown("### 📉 Last Known Metrics")
-        meta_files = glob.glob("checkpoints/training_metadata.json")
-        if meta_files:
-            with open(meta_files[0], 'r') as f:
-                st.json(json.load(f))
-        else:
-            st.info("No training metadata found. Ready to start.")
+        # EXECUTION LOGIC (Runs if state is active)
+        if st.session_state['training_active']:
+            st.info("🔄 Process Running... Do not refresh.")
+            st.markdown("### 📜 Live Training Logs")
+            
+            log_box = st.empty()
+            cmd = "./run_retrain.sh"
+            
+            if st.session_state['training_mode'] == 'resume':
+                cmd += " --resume"
+            
+            # Run the command (Blocking)
+            ret_code = run_command_with_streaming(cmd, log_box)
+            
+            # When finished:
+            st.session_state['training_active'] = False
+            st.session_state['training_mode'] = None
+            
+            if ret_code == 0:
+                st.success("Training Complete!")
+                st.balloons()
+            else:
+                st.error("Training Failed. Check logs.")
+                
+            time.sleep(2)
+            st.rerun()
+
+        elif not st.session_state['training_active']:
+            st.markdown("### 📉 Last Known Metrics")
+            if meta_files:
+                with open(meta_files[0], 'r') as f:
+                    st.json(json.load(f))
+            else:
+                st.info("No training metadata found. Ready to start.")
 
 # --- 3. EVALUATION & COMPARE ---
 elif page == "Evaluation & Compare":
