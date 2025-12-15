@@ -63,7 +63,10 @@ with st.sidebar:
     
     st.divider()
     st.caption("Environment: Supercomputer (Linux)")
-    if st.button("🔄 Refresh State"):
+    
+    # Disable refresh if process running
+    is_locked = st.session_state.get('training_active', False)
+    if st.button("🔄 Refresh State", disabled=is_locked):
         st.rerun()
 
 # --- 1. DASHBOARD ---
