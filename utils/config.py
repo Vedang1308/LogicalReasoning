@@ -29,7 +29,7 @@ class Config:
 
     # Connector Boosting
     use_connector_boost: bool = True
-    boost_factor: float = 1.1
+    boost_factor: float = 1.01
     boost_applies_to: str = "connector_words"
     
     # Tag Format - CORRECTED: Proper format tags
@@ -135,7 +135,7 @@ class Config:
     per_device_train_batch_size: int = 16
     per_device_eval_batch_size: int = 16
     gradient_accumulation_steps: int = 4
-    learning_rate: float = 5e-6
+    learning_rate: float = 2e-6
     warmup_ratio: float = 0.1
     weight_decay: float = 0.01
     max_grad_norm: float = 1.0
