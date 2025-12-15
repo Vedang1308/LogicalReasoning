@@ -1,4 +1,0 @@
-LogiQA Baseline Results
-Model: meta-llama/Llama-3.2-3B
-Accuracy: 0.0000 (0/651)
-Optimization: Simple
