@@ -5,4 +5,11 @@ echo ""
 echo "Then open: http://localhost:8501"
 echo ""
 
-streamlit run app.py --server.headless true --server.address 0.0.0.0 --server.port 8501
+streamlit run app.py \
+    --server.headless true \
+    --server.address 0.0.0.0 \
+    --server.port 8501 \
+    --server.enableCORS false \
+    --server.enableXsrfProtection false \
+    --server.fileWatcherType none
+
