@@ -40,6 +40,9 @@ def run_command_with_streaming(command, log_container):
         universal_newlines=True
     )
     
+    if 'log_history' not in st.session_state:
+        st.session_state['log_history'] = ""
+        
     output_log = ""
     while True:
         line = process.stdout.readline()
@@ -47,10 +50,13 @@ def run_command_with_streaming(command, log_container):
             break
         if line:
             output_log += line
-            # Keep only last 2000 chars to avoid UI lag
+            # Update Persistent History
+            st.session_state['log_history'] += line
+            
+            # Keep only last 2000 chars for the "Live" box to avoid UI lag
             display_log = output_log[-2000:] 
             log_container.code(display_log, language="bash")
-            time.sleep(0.01) # Yield to UI
+            # time.sleep(0.001) # fast yield
             
     return process.returncode
 
@@ -92,6 +98,9 @@ elif page == "Training Control":
     if 'training_active' not in st.session_state:
         st.session_state['training_active'] = False
         st.session_state['training_mode'] = None
+    
+    if 'log_history' not in st.session_state:
+        st.session_state['log_history'] = "--- Log History Initialized ---\n"
 
     # Helper to unlock
     def lock_ui(mode):
@@ -202,6 +211,13 @@ elif page == "Training Control":
             
             # Run
             try:
+                # Clear previous log for new run, but keep history if needed?
+                # For now, let's keep one massive scrollable history or just the latest?
+                # User asked for "history of everything", let's append.
+                
+                timestamp = time.strftime("%H:%M:%S")
+                st.session_state['log_history'] += f"\n\n--- EXECUTION STARTED AT {timestamp} ---\n"
+                
                 ret_code = run_command_with_streaming(cmd, log_container)
                 
                 # Completion Handling
@@ -210,12 +226,12 @@ elif page == "Training Control":
                 if ret_code == 0:
                     st.success("✅ Process Completed Successfully!")
                     st.balloons()
+                    time.sleep(3)
+                    st.rerun()
                 else:
-                    st.error(f"❌ Process Failed (Exit Code: {ret_code}). See logs above.")
-                
-                # Delay to let user see the result before potential rerun
-                time.sleep(3)
-                st.rerun()
+                    st.error(f"❌ Process Failed (Exit Code: {ret_code}).")
+                    st.warning("Logs are preserved below. Fix the error and try again.")
+                    # DO NOT RERUN so user can see the error
                 
             except Exception as e:
                 st.error(f"System Error: {e}")
@@ -235,6 +251,11 @@ elif page == "Training Control":
                 1.  **Resume**: Use if you were interrupted.
                 2.  **Start Fresh**: Use for a new run (Standard for Retraining).
                 """)
+
+        # PERSISTENT LOG SECTION
+        st.divider()
+        with st.expander("📜 Full Execution History (Persistent)", expanded=True):
+            st.code(st.session_state.get('log_history', '(No logs yet)'), language="bash")
 
 # --- 3. EVALUATION & COMPARE ---
 elif page == "Evaluation & Compare":
