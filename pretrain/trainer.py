@@ -291,22 +291,18 @@ class ConnectorTrainer:
             current_file_idx = file_pointer
             chunk_batch_count = 0
             
-            pbar = tqdm(
-                batch_stream,
-                desc=f"Epoch {epoch_num} | Chunk {chunk_number}/{total_chunks}",
-                unit="batch",
-                total=chunk_batches,
-                ncols=120,
-                bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]'
-            )
+            # Custom Progress Logging (No TQDM to avoid log spam in UI)
+            print(f"Starting processing... ({chunk_batches} batches expected)")
             
-            for tokens, amps, sources in pbar:
+            start_time = time.time()
+            
+            for i, (tokens, amps, sources) in enumerate(batch_stream):
                 global_batch_count += 1
                 chunk_batch_count += 1
                 
+                # source handling
                 if sources and len(sources) > 0:
                     first_source = sources[0]
-                    
                     if len(first_source) == 4:
                         file_idx, sample_idx, pos, fname = first_source
                     elif len(first_source) == 3:
@@ -321,13 +317,10 @@ class ConnectorTrainer:
                     
                     if file_idx != current_file_idx - file_pointer:
                         current_file_idx = file_idx + file_pointer
-                        current_file_name = Path(fname).name if isinstance(fname, str) else f"file_{file_idx}"
-                        pbar.write(f"\n📂 Processing: {fname}")
-                    
-                    pbar.set_description(
-                        f"Epoch {epoch_num} | Chunk {chunk_number}/{total_chunks} | {current_file_name}"
-                    )
-                
+                        new_fname = Path(fname).name if isinstance(fname, str) else f"file_{file_idx}"
+                        print(f"  📂 Started File: {new_fname}")
+                        current_file_name = new_fname
+
                 input_ids = torch.tensor(tokens, dtype=torch.long).to(self.device)
                 amp_vec = torch.tensor(amps, dtype=torch.float32).to(self.device)
                 
@@ -358,10 +351,13 @@ class ConnectorTrainer:
                 
                 total_loss += loss.item()
                 
-                pbar.set_postfix({
-                    'loss': f'{loss.item():.4f}',
-                    'avg_loss': f'{total_loss/global_batch_count:.4f}'
-                })
+                # Periodic Logging (Every 100 batches)
+                if chunk_batch_count % 100 == 0 or chunk_batch_count == 1:
+                    elapsed = time.time() - start_time
+                    wps = chunk_batch_count / elapsed
+                    avg_loss_val = total_loss/global_batch_count
+                    print(f"   [Epoch {epoch_num} | Chunk {chunk_number}/{total_chunks}] Batch {chunk_batch_count}/{chunk_batches} | "
+                          f"Loss: {loss.item():.4f} (Avg: {avg_loss_val:.4f}) | {wps:.2f} batch/s")
                 
                 if sources and len(sources) > 0:
                     # FIX: Add start_file_idx offset to properly calculate global index
