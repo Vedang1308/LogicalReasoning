@@ -352,8 +352,8 @@ class ConnectorTrainer:
                 
                 total_loss += loss.item()
                 
-                # Periodic Logging (Every 100 batches)
-                if chunk_batch_count % 100 == 0 or chunk_batch_count == 1:
+                # Periodic Logging (Every 10 batches)
+                if chunk_batch_count % 10 == 0 or chunk_batch_count == 1:
                     elapsed = time.time() - start_time
                     wps = chunk_batch_count / elapsed if elapsed > 0 else 0
                     
