@@ -111,14 +111,19 @@ elif page == "Training Control":
     with col1:
         st.markdown("### 🎮 Control Panel")
         
-        # --- CHECKPOINT VALIDATION LOGIC ---
+    with col1:
+        st.markdown("### 🎮 Control Panel")
+        
+        # --- STRICT CHECKPOINT VALIDATION ---
         meta_path = Path("checkpoints/training_metadata.json")
         checkpoint_dir = Path("checkpoints")
         
         has_metadata = meta_path.exists()
         has_weights = (checkpoint_dir / "model.safetensors").exists() or (checkpoint_dir / "pytorch_model.bin").exists()
-        is_valid_run = False
-        checkpoint_info = "❌ No Checkpoint"
+        
+        can_resume = False
+        status_msg = "❌ No Checkpoint Found"
+        status_color = "red" # red, orange, green
         
         if has_metadata:
             try:
@@ -126,30 +131,41 @@ elif page == "Training Control":
                     meta = json.load(f)
                     epoch = meta.get('epoch', 1)
                     files = meta.get('files_processed', 0)
-                    timestamp = meta.get('timestamp', '')
+                    timestamp = meta.get('timestamp', '') # ISO format
                     
-                    # Logic: meaningful progress?
-                    if files > 0 or epoch > 1:
-                        is_valid_run = True
-                        checkpoint_info = f"✅ Epoch {epoch} | Files {files}"
-                    else:
-                        checkpoint_info = "⚠️ Checkpoint Found but Empty (0 files)"
-            except:
-                checkpoint_info = "⚠️ Corrupted Metadata"
+                    # 1. Check Recency (Ignore old runs from Nov)
+                    # Simple string check for Dec 2025 onwards
+                    is_recent = "2025-12" in str(timestamp) or "2026-" in str(timestamp)
+                    
+                    # 2. Check Progress (At least 1 chunk/file)
+                    # We know files_per_chunk=1, so files>=1 means 1 chunk done.
+                    has_progress = files >= 1
+                    
+                    if is_recent and has_progress and has_weights:
+                        can_resume = True
+                        status_msg = f"✅ Valid Checkpoint: Epoch {epoch} | Files {files}"
+                        status_color = "green"
+                    elif not is_recent:
+                        status_msg = "⚠️ Found Old/Legacy Model (Start Fresh)"
+                        status_color = "orange"
+                    elif not has_progress:
+                        status_msg = "⚠️ Checkpoint exists but < 1 chunk done (Start Fresh)"
+                        status_color = "orange"
+                    elif not has_weights:
+                        status_msg = "⚠️ Metadata found but Weights missing"
+                        status_color = "red"
+                        
+            except Exception as e:
+                status_msg = f"⚠️ Corrupted Metadata: {str(e)}"
+                status_color = "red"
         
-        can_resume = has_metadata and has_weights and is_valid_run
-        
-        # UI Feedback
-        if can_resume:
-            st.success(checkpoint_info)
-            if "2025-11" in str(timestamp):
-                st.warning("Old Checkpoint (Nov). Recommend Fresh Start.")
-        elif has_metadata:
-             st.warning(f"Cannot Resume: {checkpoint_info}")
-             if not has_weights:
-                 st.error("Missing model weight files!")
+        # Display Status
+        if status_color == "green":
+            st.success(status_msg)
+        elif status_color == "orange":
+            st.warning(status_msg)
         else:
-            st.info("No checkpoint found. Ready to start.")
+            st.info("Ready to Start. (No resumable progress found)")
 
         st.divider()
 
@@ -161,7 +177,7 @@ elif page == "Training Control":
         st.button("⏯️ Resume Training", 
                  disabled=(not can_resume) or is_locked, 
                  on_click=lambda: lock_ui('resume'),
-                 help="Enabled only if a valid, non-empty checkpoint exists.")
+                 help="Resume is enabled ONLY if a valid, recent checkpoint with >1 chunk exists.")
         
         st.divider()
 
