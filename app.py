@@ -103,60 +103,55 @@ elif page == "Training Control":
         st.session_state['training_active'] = False
         st.session_state['training_mode'] = None
 
+    # --- SHARED CHECKPOINT DETECTION (Run before columns) ---
+    meta_path = Path("checkpoints/training_metadata.json")
+    checkpoint_dir = Path("checkpoints")
+    
+    has_metadata = meta_path.exists()
+    has_weights = (checkpoint_dir / "model.safetensors").exists() or (checkpoint_dir / "pytorch_model.bin").exists()
+    
+    can_resume = False
+    status_msg = "❌ No Checkpoint Found"
+    status_color = "red" # red, orange, green
+    
+    # Logic to populate variables for both columns
+    meta_files = glob.glob("checkpoints/training_metadata.json") # Keep this for compatibility
+    
+    if has_metadata:
+        try:
+            with open(meta_path, 'r') as f:
+                meta = json.load(f)
+                epoch = meta.get('epoch', 1)
+                files = meta.get('files_processed', 0)
+                # Dynamic Version Check
+                saved_run_id = meta.get('training_run_id', 'legacy')
+                current_run_id = "v2_gentle_retrain" # Must match config
+                
+                is_same_version = (saved_run_id == current_run_id)
+                has_progress = files >= 1
+                
+                if is_same_version and has_progress and has_weights:
+                    can_resume = True
+                    status_msg = f"✅ Valid Checkpoint ({saved_run_id}): Epoch {epoch} | Files {files}"
+                    status_color = "green"
+                elif not is_same_version:
+                    status_msg = f"⚠️ Found Checkpoint '{saved_run_id}'. Expecting '{current_run_id}'. Start Fresh."
+                    status_color = "orange"
+                elif not has_progress:
+                    status_msg = "⚠️ Checkpoint exists but < 1 chunk done (Start Fresh)"
+                    status_color = "orange"
+                elif not has_weights:
+                    status_msg = "⚠️ Metadata found but Weights missing"
+                    status_color = "red"
+        except Exception as e:
+            status_msg = f"⚠️ Corrupted Metadata: {str(e)}"
+            status_color = "red"
+
+    # Layout
     col1, col2 = st.columns([1, 2])
     
     with col1:
         st.markdown("### 🎮 Control Panel")
-        
-    with col1:
-        st.markdown("### 🎮 Control Panel")
-        
-    with col1:
-        st.markdown("### 🎮 Control Panel")
-        
-        # --- STRICT CHECKPOINT VALIDATION ---
-        meta_path = Path("checkpoints/training_metadata.json")
-        checkpoint_dir = Path("checkpoints")
-        
-        has_metadata = meta_path.exists()
-        has_weights = (checkpoint_dir / "model.safetensors").exists() or (checkpoint_dir / "pytorch_model.bin").exists()
-        
-        can_resume = False
-        status_msg = "❌ No Checkpoint Found"
-        status_color = "red" # red, orange, green
-        
-        if has_metadata:
-            try:
-                with open(meta_path, 'r') as f:
-                    meta = json.load(f)
-                    epoch = meta.get('epoch', 1)
-                    files = meta.get('files_processed', 0)
-                    # Dynamic Version Check
-                    saved_run_id = meta.get('training_run_id', 'legacy')
-                    current_run_id = "v2_gentle_retrain" # Must match config
-                    
-                    is_same_version = (saved_run_id == current_run_id)
-                    
-                    # 2. Check Progress (At least 1 chunk/file)
-                    has_progress = files >= 1
-                    
-                    if is_same_version and has_progress and has_weights:
-                        can_resume = True
-                        status_msg = f"✅ Valid Checkpoint ({saved_run_id}): Epoch {epoch} | Files {files}"
-                        status_color = "green"
-                    elif not is_same_version:
-                        status_msg = f"⚠️ Found Old Version ('{saved_run_id}'). Expecting '{current_run_id}'. Start Fresh."
-                        status_color = "orange"
-                    elif not has_progress:
-                        status_msg = "⚠️ Checkpoint exists but < 1 chunk done (Start Fresh)"
-                        status_color = "orange"
-                    elif not has_weights:
-                        status_msg = "⚠️ Metadata found but Weights missing"
-                        status_color = "red"
-                        
-            except Exception as e:
-                status_msg = f"⚠️ Corrupted Metadata: {str(e)}"
-                status_color = "red"
         
         # Display Status
         if status_color == "green":
@@ -229,7 +224,7 @@ elif page == "Training Control":
         else:
             # IDLE STATE DISPLAY
             st.markdown("### 📉 Metrics History")
-            if has_checkpoint and meta_files:
+            if has_metadata and meta_files:
                 with open(meta_files[0], 'r') as f:
                     st.json(json.load(f))
             else:
