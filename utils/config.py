@@ -24,6 +24,7 @@ class Config:
     
     data_dir: str = "data_splits"
     num_epochs: int = 2
+    files_per_chunk: int = 1
     batch_size: int = 4
     checkpoint_frequency: int = 1
     train_pattern: str = "train_chunk_*.parquet"
