@@ -132,9 +132,22 @@ class ConnectorTrainer:
         Upload checkpoint directly using HfApi.
         This is significantly more robust than shelling out to git commands.
         """
+        print("\n" + "="*70)
+        print("📤 UPLOADING TO HUGGING FACE HUB")
+        print("="*70)
+
+        # Lazy init if needed
         if not self.hf_api:
-            print("⚠️ HfApi not initialized, skipping upload")
-            return False
+            try:
+                print("   (Initializing HfApi...)")
+                self.hf_api = HfApi()
+            except Exception as e:
+                 print(f"⚠️ Failed to init HfApi: {e}")
+                 return False
+
+        if not self.hf_repo_id:
+             print("⚠️ No repo ID set, skipping upload.")
+             return False
 
         # Generate commit message
         try:
@@ -149,10 +162,7 @@ class ConnectorTrainer:
                 )
         except Exception as e:
             print(f"⚠️ Could not read metadata for commit msg: {e}")
-
-        print("\n" + "="*70)
-        print("📤 UPLOADING TO HUGGING FACE HUB")
-        print("="*70)
+            commit_msg = "Checkpoint update"
         
         try:
             self.hf_api.upload_folder(
@@ -161,7 +171,7 @@ class ConnectorTrainer:
                 repo_type="model",
                 commit_message=commit_msg,
                 ignore_patterns=[".git", ".git/*", "__pycache__", "*.pyc"],
-                token=self.hf_token
+                token=self.hf_token # Might be None if relied on login()
             )
             print(f"✓ Successfully uploaded to {self.hf_repo_id}")
             print("="*70 + "\n")
