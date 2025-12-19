@@ -17,6 +17,7 @@ class Config:
     
     # Model Configuration
     model_name: str = "meta-llama/Llama-3.2-3B"
+    training_run_id: str = "v2_gentle_retrain" # ID to distinguish this specific training setup
     tokenizer_path: str = "./tokenizer_extended"
     device: str = "cuda"
     torch_dtype: str = "bfloat16"

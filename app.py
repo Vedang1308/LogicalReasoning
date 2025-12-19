@@ -131,22 +131,21 @@ elif page == "Training Control":
                     meta = json.load(f)
                     epoch = meta.get('epoch', 1)
                     files = meta.get('files_processed', 0)
-                    timestamp = meta.get('timestamp', '') # ISO format
+                    # Dynamic Version Check
+                    saved_run_id = meta.get('training_run_id', 'legacy')
+                    current_run_id = "v2_gentle_retrain" # Must match config
                     
-                    # 1. Check Recency (Ignore old runs from Nov)
-                    # Simple string check for Dec 2025 onwards
-                    is_recent = "2025-12" in str(timestamp) or "2026-" in str(timestamp)
+                    is_same_version = (saved_run_id == current_run_id)
                     
                     # 2. Check Progress (At least 1 chunk/file)
-                    # We know files_per_chunk=1, so files>=1 means 1 chunk done.
                     has_progress = files >= 1
                     
-                    if is_recent and has_progress and has_weights:
+                    if is_same_version and has_progress and has_weights:
                         can_resume = True
-                        status_msg = f"✅ Valid Checkpoint: Epoch {epoch} | Files {files}"
+                        status_msg = f"✅ Valid Checkpoint ({saved_run_id}): Epoch {epoch} | Files {files}"
                         status_color = "green"
-                    elif not is_recent:
-                        status_msg = "⚠️ Found Old/Legacy Model (Start Fresh)"
+                    elif not is_same_version:
+                        status_msg = f"⚠️ Found Old Version ('{saved_run_id}'). Expecting '{current_run_id}'. Start Fresh."
                         status_color = "orange"
                     elif not has_progress:
                         status_msg = "⚠️ Checkpoint exists but < 1 chunk done (Start Fresh)"

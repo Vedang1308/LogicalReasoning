@@ -206,6 +206,7 @@ class ConnectorTrainer:
                 "avg_loss": avg_loss,
                 "learning_rate": self.optimizer.param_groups[0]['lr'],
                 "model_name": self.cfg.model_name,
+                "training_run_id": getattr(self.cfg, 'training_run_id', 'unknown'),
                 "processed_files": processed_files or [],
                 "timestamp": datetime.now().isoformat()
             }
