@@ -40,10 +40,13 @@ nvidia-smi || echo "nvidia-smi not found"
 # Optimize memory allocation
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
-# 2. Set Token (replace with your token if not set)
+# 2. Set Token (Passed from App or Environment)
+# Do NOT hardcode secrets here.
 # export HF_TOKEN="hf_..." 
 
-# 4. Run Training
+export HF_REPO_ID="NeuralNinjasConnector/Connector-Llama"
+
+# 3. Run Training
 # Check if passed argument is --resume
 if [ "$1" == "--resume" ]; then
     echo "Resuming Training from Checkpoint..."

@@ -165,13 +165,18 @@ class ConnectorTrainer:
             commit_msg = "Checkpoint update"
         
         try:
+            target_branch = getattr(self.cfg, 'training_run_id', 'main')
+            print(f"   (Target Branch: {target_branch})")
+            
             self.hf_api.upload_folder(
                 folder_path=str(self.checkpoint_dir),
                 repo_id=self.hf_repo_id,
                 repo_type="model",
                 commit_message=commit_msg,
                 ignore_patterns=[".git", ".git/*", "__pycache__", "*.pyc"],
-                token=self.hf_token # Might be None if relied on login()
+                token=self.hf_token,
+                revision=target_branch,
+                create_pr=False
             )
             print(f"✓ Successfully uploaded to {self.hf_repo_id}")
             print("="*70 + "\n")
