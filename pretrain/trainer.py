@@ -355,10 +355,18 @@ class ConnectorTrainer:
                 # Periodic Logging (Every 100 batches)
                 if chunk_batch_count % 100 == 0 or chunk_batch_count == 1:
                     elapsed = time.time() - start_time
-                    wps = chunk_batch_count / elapsed
+                    wps = chunk_batch_count / elapsed if elapsed > 0 else 0
+                    
+                    # ETA Calculation
+                    remaining = chunk_batches - chunk_batch_count
+                    eta_sec = remaining / wps if wps > 0 else 0
+                    eta_str = time.strftime("%H:%M:%S", time.gmtime(eta_sec))
+                    
                     avg_loss_val = total_loss/global_batch_count
-                    print(f"   [Epoch {epoch_num} | Chunk {chunk_number}/{total_chunks}] Batch {chunk_batch_count}/{chunk_batches} | "
-                          f"Loss: {loss.item():.4f} (Avg: {avg_loss_val:.4f}) | {wps:.2f} batch/s")
+                    print(f"   [Epoch {epoch_num} | Chunk {chunk_number}/{total_chunks}] "
+                          f"Batch {chunk_batch_count}/{chunk_batches} | "
+                          f"Loss: {loss.item():.4f} (Avg: {avg_loss_val:.4f}) | "
+                          f"{wps:.2f} batch/s | ETA: {eta_str}")
                 
                 if sources and len(sources) > 0:
                     # FIX: Add start_file_idx offset to properly calculate global index
