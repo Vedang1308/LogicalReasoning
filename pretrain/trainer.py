@@ -397,7 +397,7 @@ class ConnectorTrainer:
                                 f"Epoch {epoch_num} | Chunk {chunk_number}/{total_chunks} | {current_file_name}"
                             )
             
-            pbar.close()
+            # Removed pbar.close()
             
             # --- NEW: Force update after chunk completes ---
             # This catches single-file chunks that didn't trigger the inside-loop check
