@@ -195,8 +195,13 @@ elif page == "Training Control":
         else:
              st.warning(f"Resume Disabled: {status_msg}")
              if has_metadata:
-                 with st.expander("Debug: Checkpoint Metadata"):
+                 with st.expander("Debug: Checkpoint Metadata & Files"):
                      st.json(meta if 'meta' in locals() else "No metadata loaded")
+                     st.write("**Files in checkpoints/:**")
+                     try:
+                         st.code("\n".join(os.listdir("checkpoints")))
+                     except Exception as e:
+                         st.error(f"List error: {e}")
         
         st.divider()
 
