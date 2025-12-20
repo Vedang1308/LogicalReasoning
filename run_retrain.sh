@@ -6,11 +6,11 @@ set -e  # Exit immediately if a command exits with a non-zero status.
 
 # 1. Source environment (Try standard paths, but don't fail)
 if [ -f "/home/vavaghad/miniconda/bin/activate" ]; then
-    source /home/vavaghad/miniconda/bin/activate
+    source /home/vavaghad/miniconda/bin/activate base
 elif [ -f "$HOME/miniconda3/bin/activate" ]; then
-    source "$HOME/miniconda3/bin/activate"
+    source "$HOME/miniconda3/bin/activate" base
 elif [ -f "$HOME/anaconda3/bin/activate" ]; then
-    source "$HOME/anaconda3/bin/activate"
+    source "$HOME/anaconda3/bin/activate" base
 fi
 
 # Activate base env if possible without erroring
