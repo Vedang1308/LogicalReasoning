@@ -117,7 +117,15 @@ elif page == "Training Control":
     checkpoint_dir = Path("checkpoints")
     
     has_metadata = meta_path.exists()
-    has_weights = (checkpoint_dir / "model.safetensors").exists() or (checkpoint_dir / "pytorch_model.bin").exists()
+    
+    # Check for ANY valid weight file (Full Model or Adapter)
+    potential_weights = [
+        "model.safetensors", 
+        "pytorch_model.bin", 
+        "adapter_model.safetensors", 
+        "adapter_model.bin"
+    ]
+    has_weights = any((checkpoint_dir / w).exists() for w in potential_weights)
     
     can_resume = False
     status_msg = "❌ No Checkpoint Found"
