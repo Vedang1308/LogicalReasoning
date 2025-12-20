@@ -118,10 +118,12 @@ elif page == "Training Control":
     
     has_metadata = meta_path.exists()
     
-    # Check for ANY valid weight file (Full Model or Adapter)
+    # Check for ANY valid weight file (Full Model, Sharded, or Adapter)
     potential_weights = [
         "model.safetensors", 
+        "model.safetensors.index.json",
         "pytorch_model.bin", 
+        "pytorch_model.bin.index.json",
         "adapter_model.safetensors", 
         "adapter_model.bin"
     ]
