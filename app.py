@@ -177,10 +177,18 @@ elif page == "Training Control":
         
         # 1. RESUME
         st.markdown("**Option A: Resume**")
-        st.button("⏯️ Resume Training", 
-                 disabled=(not can_resume) or is_locked, 
-                 on_click=lambda: lock_ui('resume'),
-                 help="Resume is enabled ONLY if a valid, recent checkpoint with >1 chunk exists.")
+        if can_resume:
+             if st.button("⏯️ Resume Training", type="primary", use_container_width=True, disabled=is_locked):
+                 lock_ui("resume")
+                 # Logic to run...
+                 cmd = f"./run_retrain.sh --resume"
+                 st.session_state['run_command'] = cmd
+                 st.rerun()
+        else:
+             st.warning(f"Resume Disabled: {status_msg}")
+             if has_metadata:
+                 with st.expander("Debug: Checkpoint Metadata"):
+                     st.json(meta if 'meta' in locals() else "No metadata loaded")
         
         st.divider()
 

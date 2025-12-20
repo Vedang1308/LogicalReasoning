@@ -53,14 +53,14 @@ if [ "$1" == "--resume" ]; then
     # Don't delete checkpoints folder if resuming!
     python3 -u main.py \
         --hf-repo-id "NeuralNinjasConnector/Connector-Llama" \
-        --num-epochs 1 \
+        --num-epochs 3 \
         --resume-training
 else
     echo "Starting FRESH Training (Cleaning old checkpoints)..."
     rm -rf checkpoints/
     python3 -u main.py \
         --hf-repo-id "NeuralNinjasConnector/Connector-Llama" \
-        --num-epochs 1
+        --num-epochs 3
 fi
 
 echo "Retraining Complete!"
