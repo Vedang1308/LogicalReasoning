@@ -1,7 +1,7 @@
-# NeuralNinjas: NeuroLogic Agent (CSE 576 Topics in NLP)
+# Connector Aware Pretraining of LLM (CSE 576 Topics in NLP)
 
 ##  Project Overview
-**NeuroLogic Agent** is a specialized NLP project focused on enhancing logical reasoning capabilities in language models through a "Gentle Retraining" approach and dynamic inference adjustments. The system uses a **Llama-3.2-3B** base model and applies targeted training to improve performance on logical reasoning tasks (specifically LogiQA).
+This is a specialized NLP project focused on enhancing logical reasoning capabilities in language models through a "Gentle Retraining" approach and dynamic inference adjustments. The system uses a **Llama-3.2-3B** base model and applies targeted training to improve performance on logical reasoning tasks (specifically LogiQA).
 
 This repository contains the complete codebase for:
 - **web Interface**: A streamlined Streamlit dashboard for controlling training, visualization, and interaction.
