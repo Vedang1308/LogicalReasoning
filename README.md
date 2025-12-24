@@ -1,68 +1,61 @@
-# 🧠 NeuralNinjas: NeuroLogic Agent
-### Connector Aware Pretraining of LLM (CSE 576 Topics in NLP)
+# 🧠 NeuroLogic Agent: Connector Aware Pretraining
+### CSE 576 Topics in NLP (Development Snapshot)
 
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-research-orange)
-![Base Model](https://img.shields.io/badge/base%20model-Llama--3.2--3B-purple)
-
-## 📖 Table of Contents
-- [Project Overview](#-project-overview)
-- [Features](#-features)
-- [Installation & Setup](#-installation--setup)
-- [Usage](#-usage)
-- [Project Structure](#-project-structure)
-- [Team](#-team)
 
 ---
 
-## 🚀 Project Overview
+## 📅 Project Timeline & Scope
 
-**NeuroLogic Agent** is a specialized NLP research project focused on enhancing logical reasoning capabilities in language models. We employ a novel **"Gentle Retraining"** approach combined with **Dynamic Inference** adjustments to boost performance on logical reasoning tasks (LogiQA) without compromising general language understanding.
+**This repository contains the complete development history of the NeuroLogic Agent project, spanning two distinct phases:**
 
-This repository hosts the complete ecosystem:
-*   **Web Control Center**: A centralized dashboard for training and evaluation.
-*   **Custom Training Loop**: Implementation of targeted fine-tuning.
-*   **Evaluation Suite**: Tools for benchmarking and model comparison.
+### 1. 🎓 The Semester Project (Academic Core)
+The original academic work completed during the CSE 576 course. This phase focused on the fundamental research question: *Can we improve logical reasoning in small LLMs without sacrificing general capability?*
+*   **Deliverable**: The final project report (uploaded separately).
+*   **Core Contribution**: Design of the "Gentle Retraining" methodology using LoRA.
+*   **Baseline**: Evaluation on the LogiQA dataset using standard metrics.
+
+### 2. 🚀 Post-Semester Extensions (NeuralNinjas)
+**Current Status**: Active Development
+After the semester ended, the project was continued to transform the research code into a robust engineering product. All "NeuralNinjas" branding, advanced UI components, and interactive tools belong to this phase.
+*   **Web Dashboard**: The `streamlist` based Control Center (`app.py`).
+*   **Dynamic Inference**: Real-time token boosting for logical connectors.
+*   **Engineering Polish**: Advanced error handling, resume capability, and Docker/Environment automation.
 
 ---
 
-## ✨ Features
+## ✨ Features (Full System)
 
-### 🎮 interactive Dashboard (`app.py`)
-A single-screen command center designed for efficiency:
-*   **Real-time Monitoring**: Stream training logs directly to the UI.
-*   **Execution Control**: Seamlessly Pause, Resume, or Restart training runs.
-*   **Visual Evaluation**: Plot comparative performance metrics (Base vs. Retrained).
-*   **Logic Playground**: Type sentences and watch the "Dynamic Logic Boost" highlight reasoning connectors in real-time.
+### 🎨 Interactive Dashboard (Post-Semester)
+The **NeuralNinjas Control Center** (`app.py`) provides a visual interface for the underlying research code:
+*   **Monitor Training**: Real-time logs and loss curves.
+*   **Control Execution**: Pause/Resume training jobs seamlessly.
+*   **Playground**: Interactive text area demonstrating the **Dynamic Logic Boost** with visual highlighting.
 
-### 🧠 Training & Modeling
+### ⚙️ Training Pipeline (Core + Extensions)
 *   **Base Model**: `meta-llama/Llama-3.2-3B`
-*   **Techniques**:
-    *   **Gentle Retraining**: Using Low-Rank Adaptation (LoRA) to inject logic awareness.
-    *   **Dynamic Inference**: Runtime boosting of logical connectors (e.g., "therefore", "unless") to sharpen reasoning paths.
+*   **Methodology**:
+    *   **Gentle Retraining**: Fine-tuning on logical connector-heavy datasets.
+    *   **Dynamic Inference**: Runtime probability adjustment for reasoning tokens (e.g., "therefore", "thus").
 
 ---
 
 ## 🛠 Installation & Setup
 
 ### Prerequisites
-*   **Python 3.10+**
-*   **Conda** (Recommended)
+*   **Python 3.10+** (Managed via Conda)
+*   **CUDA/GPU Support** (Recommended for Training)
 
-### Quick Start
-We provide an automated setup script to handle environment creation and dependency installation.
+### Automatic Setup
+Run the setup script to configure the environment:
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/Vedang1308/LogicalReasoning.git
-cd LogicalReasoning
-
-# 2. Run the setup script
 ./setup_env.sh
 ```
 
-**Manual Activation**:
+### Activation
 ```bash
 conda activate nlp_fix_env
 ```
@@ -71,27 +64,22 @@ conda activate nlp_fix_env
 
 ## 🖥 Usage
 
-### 1. Web Interface (Recommended)
-Launch the comprehensive dashboard:
+### Running the Dashboard
+To launch the post-semester "NeuralNinjas" interface:
 
 ```bash
 ./run_app.sh
 ```
 
 **Remote Access (SSH)**:
-If running on a headless server, forward the port to your local machine:
 ```bash
 ssh -L 8501:localhost:8501 your_user@remote_host
-# Open http://localhost:8501 in your browser
 ```
 
-### 2. Command Line Tools
-For headless operation or batch processing:
-
-| Script | Purpose |
-| :--- | :--- |
-| `./run_retrain.sh` | Start or resume the Gentle Retraining pipeline. |
-| `./run_comparison.sh` | Run the evaluation suite on LogiQA. |
+### Command Line Tools
+For pure research/training reproduction (Semester Scope):
+*   **Training**: `./run_retrain.sh`
+*   **Evaluation**: `./run_comparison.sh`
 
 ---
 
@@ -99,23 +87,17 @@ For headless operation or batch processing:
 
 ```text
 CSE_576_TOPICS_IN_NLP_MAIN/
-├── app.py                  # Streamlit Dashboard Entry Point
-├── setup_env.sh            # Environment Setup Script
-├── requirements.txt        # Python Dependencies
-├── pretrain/               # Training Source Code
-│   ├── trainer.py          # Custom Training Loop
-│   └── ...
-├── baseline/               # Evaluation Source Code
-│   ├── logiqa_baseline.py  # Zero-shot Evaluator
-│   └── ...
-├── checkpoints/            # Model Weights & Metadata
-└── utils/                  # Helper Scripts
+├── app.py                  # [Extension] Streamlit Dashboard
+├── pretrain/               # [Core] Training logic & Model definitions
+│   └── trainer.py
+├── baseline/               # [Core] LogiQA Evaluation
+│   └── logiqa_baseline.py
+├── checkpoints/            # [Mixed] Saved Models
+└── setup_env.sh            # [Extension] Automation Script
 ```
 
 ---
 
 ## 👥 Team
 **Course**: CSE 576 Topics in NLP  
-**Project**: NeuroLogic Agent
-
-*Created with ❤️ by the NeuralNinjas Team*
+**Project**: Connector Aware Pretraining
