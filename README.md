@@ -1,90 +1,121 @@
-# Connector Aware Pretraining of LLM (CSE 576 Topics in NLP)
+# 🧠 NeuralNinjas: NeuroLogic Agent
+### Connector Aware Pretraining of LLM (CSE 576 Topics in NLP)
 
-##  Project Overview
-This is a specialized NLP project focused on enhancing logical reasoning capabilities in language models through a "Gentle Retraining" approach and dynamic inference adjustments. The system uses a **Llama-3.2-3B** base model and applies targeted training to improve performance on logical reasoning tasks (specifically LogiQA).
+![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-research-orange)
+![Base Model](https://img.shields.io/badge/base%20model-Llama--3.2--3B-purple)
 
-This repository contains the complete codebase for:
-- **web Interface**: A streamlined Streamlit dashboard for controlling training, visualization, and interaction.
-- **Training Pipeline**: Custom training loop for "Gentle Retraining" to preserve general capabilities while boosting logic.
-- **Evaluation**: Tools to compare the base model against the retrained model.
+## 📖 Table of Contents
+- [Project Overview](#-project-overview)
+- [Features](#-features)
+- [Installation & Setup](#-installation--setup)
+- [Usage](#-usage)
+- [Project Structure](#-project-structure)
+- [Team](#-team)
 
-##  Features
+---
 
-###  Interactive Dashboard (`app.py`)
-The heart of the project is the **NeuralNinjas Control Center**, a single-screen interface that allows you to:
-- **Monitor Training**: View real-time logs and status of training jobs.
-- **Control Execution**: seamless "Resume" and "Fresh Start" capabilities for training runs.
-- **Evaluate**: Run and visualize head-to-head comparisons between models.
-- **Playground**: Type text and see the "Dynamic Logic Boost" in action with real-time token highlighting.
+## 🚀 Project Overview
 
-###  Training & Modeling
-- **Base Model**: `meta-llama/Llama-3.2-3B`
-- **Methodology**: 
-    - **Gentle Retraining**: Low-rank adaptation (LoRA) or selective fine-tuning to inject logic capabilities without catastrophic forgetting.
-    - **Dynamic Inference**: At inference time, logical connectors (e.g., "therefore", "because") are dynamically boosted to emphasize reasoning paths.
+**NeuroLogic Agent** is a specialized NLP research project focused on enhancing logical reasoning capabilities in language models. We employ a novel **"Gentle Retraining"** approach combined with **Dynamic Inference** adjustments to boost performance on logical reasoning tasks (LogiQA) without compromising general language understanding.
 
-##  Installation & Setup
+This repository hosts the complete ecosystem:
+*   **Web Control Center**: A centralized dashboard for training and evaluation.
+*   **Custom Training Loop**: Implementation of targeted fine-tuning.
+*   **Evaluation Suite**: Tools for benchmarking and model comparison.
+
+---
+
+## ✨ Features
+
+### 🎮 interactive Dashboard (`app.py`)
+A single-screen command center designed for efficiency:
+*   **Real-time Monitoring**: Stream training logs directly to the UI.
+*   **Execution Control**: Seamlessly Pause, Resume, or Restart training runs.
+*   **Visual Evaluation**: Plot comparative performance metrics (Base vs. Retrained).
+*   **Logic Playground**: Type sentences and watch the "Dynamic Logic Boost" highlight reasoning connectors in real-time.
+
+### 🧠 Training & Modeling
+*   **Base Model**: `meta-llama/Llama-3.2-3B`
+*   **Techniques**:
+    *   **Gentle Retraining**: Using Low-Rank Adaptation (LoRA) to inject logic awareness.
+    *   **Dynamic Inference**: Runtime boosting of logical connectors (e.g., "therefore", "unless") to sharpen reasoning paths.
+
+---
+
+## 🛠 Installation & Setup
 
 ### Prerequisites
-- **Python 3.8+** (Python 3.10 recommended)
-- **Conda** (Optional but recommended for environment management)
+*   **Python 3.10+**
+*   **Conda** (Recommended)
 
-### Automatic Setup
-We provide a setup script to configure your environment automatically.
+### Quick Start
+We provide an automated setup script to handle environment creation and dependency installation.
 
 ```bash
+# 1. Clone the repository
+git clone https://github.com/Vedang1308/LogicalReasoning.git
+cd LogicalReasoning
+
+# 2. Run the setup script
 ./setup_env.sh
 ```
 
-This script will:
-1. Check your Python version.
-2. Create a Conda environment `nlp_fix_env` (if needed).
-3. Install all dependencies from `requirements.txt`.
-
-### Activation
-After setup, activate the environment:
+**Manual Activation**:
 ```bash
 conda activate nlp_fix_env
 ```
 
-##  Usage
+---
 
-### Running the Web Interface
-To start the Control Center dashboard:
+## 🖥 Usage
+
+### 1. Web Interface (Recommended)
+Launch the comprehensive dashboard:
 
 ```bash
 ./run_app.sh
 ```
 
 **Remote Access (SSH)**:
-If you are running this on a remote server (e.g., a university supercomputer), use SSH tunneling to view the dashboard on your local machine:
-
+If running on a headless server, forward the port to your local machine:
 ```bash
-# Run this on your LOCAL machine
-ssh -L 8501:localhost:8501 your_username@remote_host_address
+ssh -L 8501:localhost:8501 your_user@remote_host
+# Open http://localhost:8501 in your browser
 ```
-Then open `http://localhost:8501` in your browser.
 
-### Command Line Utilities
-While the Dashboard is the preferred way to interact, you can also run individual components manually:
+### 2. Command Line Tools
+For headless operation or batch processing:
 
-- **Run Comparison/Evaluation**:
-  ```bash
-  ./run_comparison.sh
-  ```
-- **Run Training**:
-  ```bash
-  ./run_retrain.sh
-  ```
-
-##  Project Structure
-
-- **`app.py`**: Main Streamlit application entry point.
-- **`pretrain/`**: Contains training logic (`trainer.py`) and model definitions.
-- **`baseline/`**: Baseline model evaluation code (`logiqa_baseline.py`).
-- **`utils/`**: Helper scripts and configuration files.
-- **`checkpoints/`**: Directory where model weights and training metadata are saved.
-- **`setup_env.sh`**: Environment installation script.
+| Script | Purpose |
+| :--- | :--- |
+| `./run_retrain.sh` | Start or resume the Gentle Retraining pipeline. |
+| `./run_comparison.sh` | Run the evaluation suite on LogiQA. |
 
 ---
-*Created for CSE 576 Topics in NLP*
+
+## 📂 Project Structure
+
+```text
+CSE_576_TOPICS_IN_NLP_MAIN/
+├── app.py                  # Streamlit Dashboard Entry Point
+├── setup_env.sh            # Environment Setup Script
+├── requirements.txt        # Python Dependencies
+├── pretrain/               # Training Source Code
+│   ├── trainer.py          # Custom Training Loop
+│   └── ...
+├── baseline/               # Evaluation Source Code
+│   ├── logiqa_baseline.py  # Zero-shot Evaluator
+│   └── ...
+├── checkpoints/            # Model Weights & Metadata
+└── utils/                  # Helper Scripts
+```
+
+---
+
+## 👥 Team
+**Course**: CSE 576 Topics in NLP  
+**Project**: NeuroLogic Agent
+
+*Created with ❤️ by the NeuralNinjas Team*
